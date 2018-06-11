@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from django.db import models
 
+
 class Dog(models.Model):
     name = models.CharField(max_length=100)
     image_filename = models.CharField(max_length=255, blank=True)
@@ -17,6 +18,7 @@ class Dog(models.Model):
 
     def __str__(self):
         return self.name
+
 
 class UserDog(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)

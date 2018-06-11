@@ -4,13 +4,11 @@ import operator
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
-from django.http import HttpResponse, Http404
 from django.shortcuts import get_object_or_404
 
 from rest_framework import generics, status, views
 from rest_framework import mixins
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework import viewsets
 from rest_framework.decorators import detail_route
 from rest_framework.response import Response
 
@@ -76,8 +74,8 @@ class RetrieveUpdateUserPrefView(generics.RetrieveUpdateAPIView):
         qs = self.build_queryset(self.request.user)
 
         # get all the dogs that we are going to filter against      
-        all_dogs = models.Dog.objects.filter(reduce(operator.or_, qs))
-
+        all_dogs = models.Dog.objects.filter(qs)
+       
         # give each of the dog in the queryset an value of undecided
         for dog in all_dogs:
             d = models.UserDog.objects.create(
@@ -86,12 +84,14 @@ class RetrieveUpdateUserPrefView(generics.RetrieveUpdateAPIView):
                                 )
             d.save()
 
-        serializer = serializers.UserPrefSerializer()
+        # retrun the updated user preferences
+        serializer = serializers.UserPrefSerializer(userprefs)
         return Response(serializer.data)
 
 
     def build_queryset(self, user):
         ''' dynamically create a queryset to use '''
+        query = Q()
         age_filters = {}
         age_range = {'b': (0, 6), 'y': (6, 48),  # arbitary ages of dogs
                         'a': (48, 84), 's': (84, 240)}
@@ -109,8 +109,9 @@ class RetrieveUpdateUserPrefView(generics.RetrieveUpdateAPIView):
                 age_filters.update({a:age_range[a]})
 
         # part 3 combine the 2 queries
-        query = ([Q(age__range=value) for value in age_filters.values()])
-        query.append(g_s_query)
+        for value in age_filters.values():
+            query |= Q(age__range=value)
+        query.add(g_s_query, Q.AND)
         return query  
     
 
@@ -118,8 +119,6 @@ class RetrieveUpdateLDUDogView(views.APIView):
     ''' Retrieve doggies liked, disliked or undecided based on 
         the logged in user preferences.
     '''
-    # queryset = models.Dog.objects.all()
-    # serializer_class = serializers.DogSerializer
 
     def get(self, *args, **kwargs):
         ''' Filter and return a single Doogie base on the incoming url or
@@ -128,21 +127,21 @@ class RetrieveUpdateLDUDogView(views.APIView):
             the second
         '''
         like_dislike_undecided = self.kwargs.get('ldu_decision')[:1]
-        status_data = models.Dog.objects.all().filter(
-                                userdog__user=self.request.user,
-                                userdog__status=like_dislike_undecided
-                                )
+        status_data = models.Dog.objects.filter(
+                            (Q(userdog__user=self.request.user) &
+                            Q(userdog__status=like_dislike_undecided))
+                            )
         if status_data:
-            if self.kwargs.get('pk') == '-1':
+            if self.kwargs.get('pk') == '-1' or len(status_data) == 1:
                 serializer = serializers.DogSerializer(status_data[0])
                 return Response(serializer.data)
             else:    
                 try:
                     user_dog = status_data[int(self.kwargs.get('pk'))]
+                    serializer = serializers.DogSerializer(user_dog)
+                    return Response(serializer.data)
                 except IndexError:
                     return Response(status=status.HTTP_404_NOT_FOUND)
-                serializer = serializers.DogSerializer(user_dog)
-                return Response(serializer.data)
         return Response(status=status.HTTP_404_NOT_FOUND)    
 
     def put(self, *args, **kwargs):
@@ -151,14 +150,16 @@ class RetrieveUpdateLDUDogView(views.APIView):
         like_dislike_undecided = self.kwargs.get('ldu_decision')[:1]
         pk = int(self.kwargs.get('pk'))
         try:
-            user_dog = models.UserDog.objects.get(id=pk)
+            dog = models.Dog.objects.get(id=pk)
         except ObjectDoesNotExist:
-            Response(status=status.HTTP_404_NOT_FOUND)    
+            return Response(status=status.HTTP_404_NOT_FOUND)    
         else:
-            user_dog.status = like_dislike_undecided
-            user_dog.save()
+            associated_dog = models.UserDog.objects.get(
+                    user=self.request.user, dog=dog)
+            associated_dog.status = like_dislike_undecided
+            associated_dog.save()
         
-        updated_dog = get_object_or_404(models.Dog, pk=pk)
-        serializer = serializers.DogSerializer(updated_dog)
-        return Response(serializer.data)
+        serializer = serializers.DogSerializer(dog)
+        return Response(serializer.data, status=status.HTTP_200_OK)   
+        
         

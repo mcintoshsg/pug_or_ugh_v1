@@ -5,11 +5,15 @@ import sys
 
 import django
 
+import pdb
+
 PROJ_DIR = path.dirname(path.dirname(path.dirname(path.abspath(__file__))))
 
 
 def load_data():
     filepath = path.join(PROJ_DIR, 'pugorugh', 'static', 'dog_details.json')
+    
+    pdb.set_trace()
     
     with open(filepath, 'r', encoding='utf-8') as file:
         data = json.load(file)

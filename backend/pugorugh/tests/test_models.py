@@ -19,29 +19,29 @@ from pugorugh.models import Dog, UserDog, UserPref
 # 15. Test new user creation - token creates
 # 16. Test the URLS
 
-###### test data for the dogs model ######
-dog_1 = {
-        'name': 'dog_1',
-        'image_filename': '1.jpg',
-        'breed': 'mutt',
-        'age': 12,
-        'gender': 'm',
-        'size': 'm'
-}
 
-dog_2 = {
-        'name': 'dog_2',
-        'image_filename': '2.jpg',
-        'breed': 'mutt',
-        'age': 48,
-        'gender': 'f',
-        'size': 'l'
-}
 
 # create a base modeltest case the models
-class ModelsBaseTestCase(TestCase):
+class BaseTestCase(TestCase):
     def setUp(self):
         ''' setup up dummy data for the Dog model '''
+        dog_1 = {
+                'name': 'dog_1',
+                'image_filename': '1.jpg',
+                'breed': 'mutt',
+                'age': 12,
+                'gender': 'm',
+                'size': 'm'
+        }
+
+        dog_2 = {
+                'name': 'dog_2',
+                'image_filename': '2.jpg',
+                'breed': 'mutt',
+                'age': 48,
+                'gender': 'f',
+                'size': 'l'
+        }
         self.dog_1 = Dog.objects.create(**dog_1)
         self.dog_2 = Dog.objects.create(**dog_2) 
 
@@ -49,12 +49,12 @@ class ModelsBaseTestCase(TestCase):
     def tearDown(self):
         pass
 
-class UserModelTestCase(ModelsBaseTestCase):
+class UserModelTestCase(BaseTestCase):
     ''' test cases for the user model '''
    
     @staticmethod
     def create_test_users(count=2):
-        ''' this test creates 2 users in the database via a function called
+        ''' this test creates 2 users in the database 
         '''
         for i in range(count):
             User.objects.create(
@@ -70,7 +70,7 @@ class UserModelTestCase(ModelsBaseTestCase):
         self.assertEqual(User.objects.get(id=1).password,'password')
             
 
-class DogModelTests(ModelsBaseTestCase):
+class DogModelTests(BaseTestCase):
     ''' testing of the Dog model '''
     def test_dog_creation(self):
         ''' test out the creation of our model '''
@@ -80,7 +80,7 @@ class DogModelTests(ModelsBaseTestCase):
         self.assertEqual(alfie, self.dog_2)
 
 
-class UserDogModelTests(ModelsBaseTestCase):
+class UserDogModelTests(BaseTestCase):
     ''' testing of the UserDog model '''
   
     def create_user_dogs(self):
@@ -100,7 +100,7 @@ class UserDogModelTests(ModelsBaseTestCase):
         self.assertEqual(UserDog.objects.get(id=1).status, 'u')
     
 
-class UserPrefModelTests(ModelsBaseTestCase):
+class UserPrefModelTests(BaseTestCase):
     ''' testing of the UserDog model '''
   
     def create_user_prefs(self):

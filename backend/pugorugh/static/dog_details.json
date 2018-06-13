@@ -121,6 +121,7 @@
   },
   {
     "name": "Prince",
+    "breed": "mutt",
     "image_filename": "16.jpg",
     "age": 81,
     "gender": "m",

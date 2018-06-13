@@ -5,7 +5,6 @@ from rest_framework import serializers
 
 
 from . import models
-import pdb
 
 
 class UserSerializer(serializers.ModelSerializer):

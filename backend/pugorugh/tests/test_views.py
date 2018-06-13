@@ -6,19 +6,6 @@ from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient, APITestCase
 
 from pugorugh.models import Dog, UserDog, UserPref
-from pugorugh.views import (UserRegisterView, 
-                            ListCreateDogView,
-                            RetrieveUpdateDestroyDogView,
-                            RetrieveUpdateUserPrefView,
-                            RetrieveUpdateLDUDogView,
-                            )
-
-# 2. Test get all dogs
-# 3. Test get single dog
-# 4. Test delete single dog
-# 5. Test update single dog
-# 10. Test validiators - bad entries
-# 16. Test the URLS
 
 
 class BaseTestCase(APITestCase):
